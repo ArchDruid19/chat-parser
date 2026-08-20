@@ -1,0 +1,5 @@
+.venv/
+.vscode/
+chat-data/cleaned_data/
+chat-data/raw_data/
+chat_parser/__pycache__/
