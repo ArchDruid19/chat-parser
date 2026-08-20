@@ -24,7 +24,7 @@ class User:
         count = 1
         for item in self.messages:
             mod = "[MOD]" if item["is_mod"] else "[NOR]"
-            timestamp = "[" + item["readable_time"].strftime("%a:%H:%M:%S") + "]"
+            timestamp = "[" + item["readable_time"].strftime("%Y-%m-%d@%H:%M:%S") + "]"
             rel_timestamp = "[R" + str(item["relative_time"]) + "]"
             lines.append(
                 str(count)

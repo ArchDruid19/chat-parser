@@ -52,12 +52,19 @@ def json_to_yt_chat(filepaths: list) -> YTChat:
                                             # Get the user message
                                             # the messege may be split into multiple objects
                                             # within the runs array, so we have to concatenate
+                                            # We also have to worry about emojis in the runs array,
+                                            # which are broken up in the json between text
                                             runs = message.get("runs")
                                             if runs:
                                                 for runs_item in runs:
                                                     tmp_msg = runs_item.get("text")
                                                     if tmp_msg:
-                                                        chat_msg += tmp_msg + " "
+                                                        chat_msg += tmp_msg
+                                                    if "emoji" in runs_item:
+                                                        # We are going to pray that a shortcut actually exists in the first idx
+                                                        emoji_shortcut = runs_item["emoji"]["shortcuts"][0]
+                                                        chat_msg += emoji_shortcut
+
                                         # Get the authors name
                                         author_name = (
                                             live_chat_text_message_renderer.get(
