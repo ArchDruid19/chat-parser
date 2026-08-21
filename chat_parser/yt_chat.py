@@ -1,4 +1,5 @@
 from chat_parser.user import User
+from chat_parser.yt_chat_msg import YTChatMsg
 
 
 class YTChat:
