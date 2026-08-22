@@ -11,10 +11,10 @@ class User:
         self.username: str = username
         self.messages: list = []
 
-    def add_message(self, yt_chat_msg):
+    def add_chat(self, yt_chat_msg):
         self.messages.append(yt_chat_msg)
 
-    def get_all_user_messages(self):
+    def get_all_user_chats(self):
         lines: list = []
         lines.append(self.username)
         count: int = 1

@@ -13,7 +13,7 @@ class YTChatMsg:
         self.rel_time: timedelta = rel_time
 
     def get_msg(self):
-        timestamp: str = "[" + self.dt.strftime("%Y-%m-%d@%H:%M:%S") + "]"
-        rel_timestamp: str = "[R" + str(self.rel_time) + "]"
-        line: str = timestamp + rel_timestamp + " " + self.message + " "
+        timestamp: str = f"[{self.dt.strftime("%Y-%m-%d@%H:%M:%S")}]"
+        rel_timestamp: str = f"[R{str(self.rel_time).rstrip("0").rstrip(".")}]"
+        line: str = f"{timestamp}{rel_timestamp} {self.message}"
         return line
