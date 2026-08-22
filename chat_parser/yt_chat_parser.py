@@ -23,6 +23,9 @@ def runs_list_to_chat_msg(runs_list: list) -> str:
                 emoji_shortcut: str = runs_item["emoji"]["shortcuts"][0]
                 chat_msg += emoji_shortcut
             else:
+                # It seems like some (or perhaps all) IOS
+                # emojis don't have a shortcut field, and there is
+                # no other metadata on the emoji available in the JSON
                 chat_msg += ":?:"
     return chat_msg
 
@@ -32,43 +35,42 @@ def add_reg_mesg_to_chat(
     chat_relative_timestamp: timedelta,
     chat: YTChat,
 ):
-    chat_msg: str = ""
     chat_author: str = ""
+    chat_msg: str = ""
     is_mod: bool = False
     chat_readable_timestamp: datetime
 
-    # Most of the useful information we need is in the liveChatTextMessageRenderer
-    # dictionary
-    # the messege may be split into multiple objects
-    # within the runs array depending on if emojis are used
-    runs: list = live_chat_text_message_renderer.get("message", {}).get("runs")
-    if runs:
-        chat_msg = runs_list_to_chat_msg(runs)
+    # Get the chat authors name
+    if "authorName" in live_chat_text_message_renderer:
+        chat_author = live_chat_text_message_renderer.get("authorName").get(
+            "simpleText", ""
+        )
 
-    # Get the authors name
-    author_simple_text: str = live_chat_text_message_renderer.get("authorName", {}).get(
-        "simpleText"
-    )
-    if author_simple_text:
-        chat_author = author_simple_text
+    # The messege may be split into multiple objects
+    # within the runs array, depending on if emojis are used
+    if "message" in live_chat_text_message_renderer:
+        chat_msg = runs_list_to_chat_msg(
+            live_chat_text_message_renderer.get("message").get("runs", [])
+        )
 
-    # Check if the author has a moderator tooltip
-    author_badges: list = live_chat_text_message_renderer.get("authorBadges")
-    if author_badges:
+    # Get the actual unix millisecond timestamp the message was sent
+    # as a datetime object
+    if "timestampUsec" in live_chat_text_message_renderer:
+        chat_timestamp: str = live_chat_text_message_renderer.get("timestampUsec", "0")
+        chat_readable_timestamp = datetime.fromtimestamp(
+            int(chat_timestamp) / 1_000_000,
+            tz=timezone.utc,
+        )
+
+    # Check if the author has a moderator tooltip/badge
+    if "authorBadges" in live_chat_text_message_renderer:
+        author_badges: list = live_chat_text_message_renderer.get("authorBadges", [])
         for author_badges_item in author_badges:
             live_chat_author_badge_renderer_tooltip: str = author_badges_item.get(
                 "liveChatAuthorBadgeRenderer"
             ).get("tooltip")
             if live_chat_author_badge_renderer_tooltip in "Moderator":
                 is_mod = True
-
-    # Get the actual unix millisecond timestamp the message was sent
-    # as a datetime object
-    chat_timestamp: str = live_chat_text_message_renderer.get("timestampUsec", "0")
-    chat_readable_timestamp = datetime.fromtimestamp(
-        int(chat_timestamp) / 1_000_000,
-        tz=timezone.utc,
-    )
 
     # Add the information we need to the Chat object
     if chat_author:
@@ -97,16 +99,19 @@ def add_super_msg_to_chat(
         author_name = live_chat_paid_message_renderer.get("authorName").get(
             "simpleText", ""
         )
+
     if "message" in live_chat_paid_message_renderer:
         chat_msg = runs_list_to_chat_msg(
             live_chat_paid_message_renderer.get("message").get("runs", [])
         )
+
     if "timestampUsec" in live_chat_paid_message_renderer:
         chat_timestamp: str = live_chat_paid_message_renderer.get("timestampUsec", "0")
         chat_readable_timestamp = datetime.fromtimestamp(
             int(chat_timestamp) / 1_000_000,
             tz=timezone.utc,
         )
+
     if "purchaseAmountText" in live_chat_paid_message_renderer:
         purchase_amt_text = live_chat_paid_message_renderer.get(
             "purchaseAmountText"
@@ -159,8 +164,8 @@ def json_to_yt_chat(filepaths: list) -> YTChat:
                                         chat_relative_timestamp,
                                         chat,
                                     )
-                                elif "liveChatPaidMessageRenderer" in item:
                                     tmpcnt += 1
+                                elif "liveChatPaidMessageRenderer" in item:
                                     live_chat_paid_message_renderer: dict = item.get(
                                         "liveChatPaidMessageRenderer"
                                     )
@@ -169,7 +174,9 @@ def json_to_yt_chat(filepaths: list) -> YTChat:
                                         chat_relative_timestamp,
                                         chat,
                                     )
-                        elif "addLiveChatTickerItemAction" in action_item:
-                            tmpcnt += 1
+                                    tmpcnt += 1
+                                elif "liveChatPaidStickerRenderer":
+                                    tmpcnt += 1
+
     print(tmpcnt)
     return chat

@@ -9,8 +9,8 @@ def main():
         ]
     )
     #chatters.print_all_chatters()
-    print(chatters.chat["@connorsommer2114"].get_all_user_chats())
-    #chatters.write_to_file("chat-data/cleaned_data/fortnite2.txt")
+    #print(chatters.chat["@connorsommer2114"].get_all_user_chats())
+    chatters.write_to_file("chat-data/cleaned_data/fortnite.txt")
 
 
 if __name__ == "__main__":
