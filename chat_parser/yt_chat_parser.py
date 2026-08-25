@@ -176,6 +176,9 @@ def json_to_yt_chat(filepaths: list) -> YTChat:
                                     )
                                     tmpcnt += 1
                                 elif "liveChatPaidStickerRenderer":
+                                    live_chat_paid_sticker_renderer = item.get(
+                                        "liveChatPaidStickerRenderer"
+                                    )
                                     tmpcnt += 1
 
     print(tmpcnt)
