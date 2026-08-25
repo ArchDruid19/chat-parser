@@ -4,9 +4,10 @@ from chat_parser.chat_msg.yt_chat_msg import YTChatMsg
 
 
 class YTChatSuperMsg(YTChatMsg):
-    def __init__(self, username, message, dt, rel_time, purchase_amt):
-        super().__init__(username, message, dt, rel_time)
-        self.purchase_amt = purchase_amt
+    def __init__(self, username, dt, rel_time, purchase_amt, message):
+        super().__init__(username, dt, rel_time)
+        self.purchase_amt: str = purchase_amt
+        self.message: str = message
 
-    def get_msg(self):
-        return f"({self.purchase_amt}){super().get_msg()}"
+    def get_msg(self) -> str:
+        return f"{super().get_timestamps()}({self.purchase_amt}) {self.message}"

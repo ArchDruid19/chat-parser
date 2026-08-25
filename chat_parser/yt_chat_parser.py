@@ -2,6 +2,7 @@ import json
 
 from chat_parser.chat_msg.yt_chat_msg import YTChatMsg
 from chat_parser.chat_msg.yt_chat_reg_msg import YTChatRegMsg
+from chat_parser.chat_msg.yt_chat_sticker import YTChatSticker
 from chat_parser.chat_msg.yt_chat_super_msg import YTChatSuperMsg
 from chat_parser.yt_chat import YTChat
 from datetime import datetime, timezone, timedelta
@@ -30,37 +31,38 @@ def runs_list_to_chat_msg(runs_list: list) -> str:
     return chat_msg
 
 
+def get_renderer_info(renderer_type: dict) -> dict:
+    chat_author: str = ""
+    chat_msg: str = ""
+    chat_readable_timestamp: datetime
+
+    # Get the chat authors name
+    if "authorName" in renderer_type:
+        chat_author = renderer_type.get("authorName").get("simpleText", "")
+
+    # The messege may be split into multiple objects
+    # within the runs array, depending on if emojis are used
+    if "message" in renderer_type:
+        chat_msg = runs_list_to_chat_msg(renderer_type.get("message").get("runs", []))
+
+    # Get the actual unix millisecond timestamp the message was sent
+    # as a datetime object
+    if "timestampUsec" in renderer_type:
+        chat_timestamp: str = renderer_type.get("timestampUsec", "0")
+        chat_readable_timestamp = datetime.fromtimestamp(
+            int(chat_timestamp) / 1_000_000,
+            tz=timezone.utc,
+        )
+    return {"author": chat_author, "msg": chat_msg, "usec": chat_readable_timestamp}
+
+
 def add_reg_mesg_to_chat(
     live_chat_text_message_renderer: dict,
     chat_relative_timestamp: timedelta,
     chat: YTChat,
 ):
-    chat_author: str = ""
-    chat_msg: str = ""
     is_mod: bool = False
-    chat_readable_timestamp: datetime
-
-    # Get the chat authors name
-    if "authorName" in live_chat_text_message_renderer:
-        chat_author = live_chat_text_message_renderer.get("authorName").get(
-            "simpleText", ""
-        )
-
-    # The messege may be split into multiple objects
-    # within the runs array, depending on if emojis are used
-    if "message" in live_chat_text_message_renderer:
-        chat_msg = runs_list_to_chat_msg(
-            live_chat_text_message_renderer.get("message").get("runs", [])
-        )
-
-    # Get the actual unix millisecond timestamp the message was sent
-    # as a datetime object
-    if "timestampUsec" in live_chat_text_message_renderer:
-        chat_timestamp: str = live_chat_text_message_renderer.get("timestampUsec", "0")
-        chat_readable_timestamp = datetime.fromtimestamp(
-            int(chat_timestamp) / 1_000_000,
-            tz=timezone.utc,
-        )
+    renderer_info: dict = get_renderer_info(live_chat_text_message_renderer)
 
     # Check if the author has a moderator tooltip/badge
     if "authorBadges" in live_chat_text_message_renderer:
@@ -73,16 +75,15 @@ def add_reg_mesg_to_chat(
                 is_mod = True
 
     # Add the information we need to the Chat object
-    if chat_author:
+    if renderer_info["author"]:
         yt_chat_msg = YTChatRegMsg(
-            chat_author,
-            chat_msg,
-            chat_readable_timestamp,
+            renderer_info["author"],
+            renderer_info["usec"],
             chat_relative_timestamp,
             is_mod,
+            renderer_info["msg"],
         )
-
-        chat.add_chat(chat_author, yt_chat_msg)
+        chat.add_chat(renderer_info["author"], yt_chat_msg)
 
 
 def add_super_msg_to_chat(
@@ -90,47 +91,63 @@ def add_super_msg_to_chat(
     chat_relative_timestamp: timedelta,
     chat: YTChat,
 ):
-    author_name: str = ""
-    chat_msg: str = ""
-    chat_readable_timestamp: datetime
     purchase_amt_text: str = ""
-
-    if "authorName" in live_chat_paid_message_renderer:
-        author_name = live_chat_paid_message_renderer.get("authorName").get(
-            "simpleText", ""
-        )
-
-    if "message" in live_chat_paid_message_renderer:
-        chat_msg = runs_list_to_chat_msg(
-            live_chat_paid_message_renderer.get("message").get("runs", [])
-        )
-
-    if "timestampUsec" in live_chat_paid_message_renderer:
-        chat_timestamp: str = live_chat_paid_message_renderer.get("timestampUsec", "0")
-        chat_readable_timestamp = datetime.fromtimestamp(
-            int(chat_timestamp) / 1_000_000,
-            tz=timezone.utc,
-        )
+    renderer_info: dict = get_renderer_info(live_chat_paid_message_renderer)
 
     if "purchaseAmountText" in live_chat_paid_message_renderer:
         purchase_amt_text = live_chat_paid_message_renderer.get(
             "purchaseAmountText"
         ).get("simpleText")
 
-    if author_name:
+    if renderer_info["author"]:
         yt_chat_msg: YTChatMsg = YTChatSuperMsg(
-            author_name,
-            chat_msg,
-            chat_readable_timestamp,
+            renderer_info["author"],
+            renderer_info["usec"],
             chat_relative_timestamp,
             purchase_amt_text,
+            renderer_info["msg"],
         )
 
-        chat.add_chat(author_name, yt_chat_msg)
+        chat.add_chat(renderer_info["author"], yt_chat_msg)
+
+
+def add_sticker_msg_to_chat(
+    live_chat_paid_sticker_renderer: dict,
+    chat_relative_timestamp: timedelta,
+    chat: YTChat,
+):
+    purchase_amt_text: str = ""
+    # There is no message for a sticker, so we will have to get
+    # the type of sticker through a differant dictionary item
+    renderer_info: dict = get_renderer_info(live_chat_paid_sticker_renderer)
+    sticker_type: str = ""
+
+    if "purchaseAmountText" in live_chat_paid_sticker_renderer:
+        purchase_amt_text = live_chat_paid_sticker_renderer.get(
+            "purchaseAmountText"
+        ).get("simpleText")
+
+    if "sticker" in live_chat_paid_sticker_renderer:
+        sticker_type = (
+            live_chat_paid_sticker_renderer.get("sticker")
+            .get("accessibility")
+            .get("accessibilityData")
+            .get("label")
+        )
+    if renderer_info["author"]:
+        yt_chat_sticker = YTChatSticker(
+            renderer_info["author"],
+            renderer_info["usec"],
+            chat_relative_timestamp,
+            purchase_amt_text,
+            sticker_type,
+        )
+
+        chat.add_chat(renderer_info["author"], yt_chat_sticker)
 
 
 def json_to_yt_chat(filepaths: list) -> YTChat:
-    tmpcnt = 1
+    tmpcnt = 0
     chat: YTChat = YTChat()
     for filepath in filepaths:
         with open(filepath) as f:
@@ -164,7 +181,7 @@ def json_to_yt_chat(filepaths: list) -> YTChat:
                                         chat_relative_timestamp,
                                         chat,
                                     )
-                                    tmpcnt += 1
+                                    # tmpcnt += 1
                                 elif "liveChatPaidMessageRenderer" in item:
                                     live_chat_paid_message_renderer: dict = item.get(
                                         "liveChatPaidMessageRenderer"
@@ -174,12 +191,18 @@ def json_to_yt_chat(filepaths: list) -> YTChat:
                                         chat_relative_timestamp,
                                         chat,
                                     )
-                                    tmpcnt += 1
+                                    # tmpcnt += 1
                                 elif "liveChatPaidStickerRenderer":
-                                    live_chat_paid_sticker_renderer = item.get(
+                                    live_chat_paid_sticker_renderer: dict = item.get(
                                         "liveChatPaidStickerRenderer"
                                     )
-                                    tmpcnt += 1
+                                    if live_chat_paid_sticker_renderer:
+                                        add_sticker_msg_to_chat(
+                                            live_chat_paid_sticker_renderer,
+                                            chat_relative_timestamp,
+                                            chat,
+                                        )
+                                        tmpcnt += 1
 
     print(tmpcnt)
     return chat

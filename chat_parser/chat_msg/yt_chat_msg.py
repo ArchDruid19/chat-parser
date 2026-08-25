@@ -6,14 +6,12 @@ from datetime import datetime, timedelta
 
 
 class YTChatMsg:
-    def __init__(self, username, message, dt, rel_time):
+    def __init__(self, username, dt, rel_time):
         self.username: str = username
-        self.message: str = message
         self.dt: datetime = dt
         self.rel_time: timedelta = rel_time
 
-    def get_msg(self):
+    def get_timestamps(self) -> str:
         timestamp: str = f"[{self.dt.strftime("%Y-%m-%d@%H:%M:%S")}]"
         rel_timestamp: str = f"[R{str(self.rel_time).rstrip("0").rstrip(".")}]"
-        line: str = f"{timestamp}{rel_timestamp} {self.message}"
-        return line
+        return f"{timestamp}{rel_timestamp}"

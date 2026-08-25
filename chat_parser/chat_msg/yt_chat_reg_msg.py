@@ -4,10 +4,11 @@ from chat_parser.chat_msg.yt_chat_msg import YTChatMsg
 
 
 class YTChatRegMsg(YTChatMsg):
-    def __init__(self, username, message, dt, rel_time, is_mod):
-        super().__init__(username, message, dt, rel_time)
+    def __init__(self, username, dt, rel_time, is_mod, message):
+        super().__init__(username, dt, rel_time)
         self.is_mod: bool = is_mod
+        self.message: str = message
 
-    def get_msg(self):
-        mod: str = "[MOD]" if self.is_mod else "[NOR]"
-        return f"{mod}{super().get_msg()}"
+    def get_msg(self) -> str:
+        mod: str = "[MOD]" if self.is_mod else ""
+        return f"{mod}{super().get_timestamps()} {self.message}"
