@@ -1,5 +1,5 @@
-from chat_parser.yt_user import User
-from chat_parser.chat_msg.yt_chat_msg import YTChatMsg
+from chat_parser.chat.yt_user import User
+from chat_parser.chat.messages.yt_msg import YTChatMsg
 
 # Represents an entire YouTube chat/collection of YouTube chats.
 # A dictionary has the username as a key, and a list of chats as

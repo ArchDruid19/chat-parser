@@ -1,10 +1,10 @@
 import json
 
-from chat_parser.chat_msg.yt_chat_msg import YTChatMsg
-from chat_parser.chat_msg.yt_chat_reg_msg import YTChatRegMsg
-from chat_parser.chat_msg.yt_chat_sticker import YTChatSticker
-from chat_parser.chat_msg.yt_chat_super_msg import YTChatSuperMsg
-from chat_parser.yt_chat import YTChat
+from chat_parser.chat.messages.yt_msg import YTChatMsg
+from chat_parser.chat.messages.yt_reg_msg import YTChatRegMsg
+from chat_parser.chat.messages.yt_sticker_msg import YTChatSticker
+from chat_parser.chat.messages.yt_super_msg import YTChatSuperMsg
+from chat_parser.chat.yt_chat import YTChat
 from datetime import datetime, timezone, timedelta
 
 # Read and clean a live-chat from a JSON file downloaded from yt-dlp

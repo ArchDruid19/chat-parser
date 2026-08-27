@@ -1,4 +1,4 @@
-from chat_parser.chat_msg.yt_chat_msg import YTChatMsg
+from chat_parser.chat.messages.yt_msg import YTChatMsg
 
 # A regular chat has all properties of a chat but also contains a moderator status
 

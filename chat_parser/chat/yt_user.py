@@ -1,9 +1,8 @@
+from chat_parser.chat.messages.yt_msg import YTChatMsg
+
 # Represents a user in the chat
 # Each user has a username and a list of messages that they
 # have sent
-
-
-from chat_parser.chat_msg.yt_chat_msg import YTChatMsg
 
 
 class User:
